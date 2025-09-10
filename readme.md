@@ -56,3 +56,14 @@ const asyncHandler = (func) => {
 };
 Same as above, but the returned function is asynchronous (async).
 Used when the inner function (func) involves asynchronous operations.
+
+
+
+npm i mongoose-aggregate-paginate-v2 - this library is used for generation of aggregation pipelines . We use plugin hook to aggrigate it
+
+
+npm i bcrypt jsonwebtoken
+
+bcrypt - bcrypt is a package used to manage passwords such as encryption, descryption, hashing and more (we can also use bcryptjs for it). Direct encryption and decryption of passwords are imossible; therefore we need to take help of hooks(middleware) such as --pre-- hook
+
+jsonwebtoken - jsonwebtoken is a library in java script used for 
