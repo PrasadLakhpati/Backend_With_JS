@@ -29,6 +29,15 @@ app.use(express.static("public"))
 app.use(cookieParser()) 
 
 
+//routes import
+import userRouter from './routes/user.routes.js'
 
+//routes decleration
+app.use("/api/v1/users", userRouter) // whenever any user types /users it will give control to userRouter, then userRouter do further. ***Here we are not using app.get() where we write routes and controller at one place but we are using middleware app.use() method as our routes and middlewares are defined differently 
+//url would be like this http://localhost:8000/api/v1/users/register.   
+//now suppose if you want to add login method just add route of /login in user.routes.js file, same as we did for /register. 
+//now automatically the url will be http://localhost:8000/api/v1/users/login
+//therefore, we have not to import anything in this file(app.js)
+//only app.use("/api/v1/users", userRouter) is sufficient because whenever user type /api/v1/users the control is sent to userRouter 
 
 export { app }
