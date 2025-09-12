@@ -55,7 +55,7 @@ const userSchema = new Schema(
 userSchema.pre("save", async function(next){ //here we are not using arrow function as callback function because arrow function doesn't hold reference of this. Here this holds the reference of userSchema 
     if(!this.isModified("password")) return next(); //if the password is not modified then we will return because we don't want to unnecessery updaations of password 
 
-    this.password = bcrypt.hash(this.password, 10) //Here we are encrypting the password of user using hash() of bcrypt library because password is confidential
+    this.password = await bcrypt.hash(this.password, 10) //Here we are encrypting the password of user using hash() of bcrypt library because password is confidential
     next()
 })
 
