@@ -67,3 +67,12 @@ npm i bcrypt jsonwebtoken
 bcrypt - bcrypt is a package used to manage passwords such as encryption, descryption, hashing and more (we can also use bcryptjs for it). Direct encryption and decryption of passwords are imossible; therefore we need to take help of hooks(middleware) such as --pre-- hook
 
 jsonwebtoken - jsonwebtoken is a library in java script used for 
+
+
+
+
+npm i cloudinary - we are using cloudinary storing and accessing files in efficient manner 
+
+npm i multer - multer is used for managing files, pdfs, images 
+
+** With the help of multer we will take file from user and store it on the local servre and with the help of clodinary we will take thoes files from local server and upload it to the server **
