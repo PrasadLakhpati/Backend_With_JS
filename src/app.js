@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser'
 const app = express() //express() returns functionalities to app; so we can use functionality of express
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.CORS_ORIGIN,//it is used to define from where the request will come (from which source address to accept request)
     credentials: true //explore more with ctrl+space
 })) // app.use() used for the setting up middleware or configurations
 
