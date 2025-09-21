@@ -76,3 +76,10 @@ npm i cloudinary - we are using cloudinary storing and accessing files in effici
 npm i multer - multer is used for managing files, pdfs, images 
 
 ** With the help of multer we will take file from user and store it on the local servre and with the help of clodinary we will take thoes files from local server and upload it to the server **
+
+
+AccessToken and RefreshToken -----> suppose user logs in and is allowed logged in for 15 min minutes(access token) only but he is uploading file on server but his 15 minutes session ends. Therefore here the concept of AccessToken and RereshToken comes which solves this problem as follows 
+    1 = RefreshToken is stored at both user and server side 
+    2 = when AccessToken is timeout 
+    3 = it checks if the RefreshToken at user and server is matched or not 
+    4 = if RefreshTokens are matched it generates new AccessToken for user 
