@@ -3,6 +3,7 @@ import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+import jwt from "jsonwebtoken"
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -180,8 +181,56 @@ const logoutUser = asyncHandler(async (req, res) => {
     )
 })
 
+
+const refreshAccessToken = asyncHandler(async (req, res) => { //when users access token expires 401 request comes to user so he has to enter password again to access. to solve this problem google as, when 401 request comes hit one endpoint where refresh your access token(in this request you send your RefreshToken, as soon as backend gets RefreshToken they matches it with the database; if same start session again so new AccessToken is sent and new RefreshToken is stored in database)
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+    if(!refreshAccessToken){
+        throw new ApiError(401, "Unauthorized request")
+    }
+
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        )
+    
+        const user = await User.findById(decodedToken?._id)
+    
+        if(!user){
+            throw new ApiError(401, "Invalid RefreshToken")
+        }
+    
+        if(incomingRefreshToken !== user?.refreshToken){
+            throw new ApiError(401, "Refreh token is expires or used")
+        }
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+    
+        const {accessToken, newRefreshToken} = await generateAccessAndRefreshTokens(user._id)
+    
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {accessToken, refreshToken: newRefreshToken},
+                "accessToken refreshed"
+            )
+        )
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token")
+    }
+})
+ 
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken
 }
