@@ -4,6 +4,7 @@ import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
+import { Subscription } from "../models/subscription.model.js"
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -243,13 +244,13 @@ const changeCurrentPassword = asyncHandler(async (req, res) =>{
 
     return res
     .status(200)
-    .json( new ApiResponse(200, {}, "password changed successfully" ))
+    .json(new ApiResponse(200, {}, "password changed successfully" ))
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
     return res
     .status(200)
-    .json(200, req.user, "Current user fetched successfully")
+    .json(new ApiResponse(200, req.user, "Current user fetched successfully"))
 })
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -283,13 +284,36 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
         throw new ApiError(400, "Avatar file is missing")
     }
 
+    //assignment : delete old image 
+    const user = User.findById(req.user?._id)
+    
+    if(!user){
+        throw new ApiError(404, "User not found")
+    }
+
+    if(user.avatar){
+        try {
+            // Cloudinary stores a public_id for each image.
+            // To delete, we need that public_id.
+            const oldImageUrl = user.avatar;
+
+            // Extract public_id from the old Cloudinary URL
+            // e.g. https://res.cloudinary.com/demo/image/upload/v1234567/foldername/abc123.jpg
+            const publicId = oldImageUrl.split("/").slice(-1)[0].split(".")[0];
+
+            await cloudinary.uploader.destroy(publicId);
+        } catch (error) {
+            console.error("Error deleting old avatar:", error.message);
+        }
+    }
+
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
     if(!avatar.url){
         throw new ApiError(400, "Error while uploading avatar")
     }
 
-    const user = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
         req.user?._id,
         {
            $set:{
@@ -301,7 +325,7 @@ const updateUserAvatar = asyncHandler( async (req, res) => {
 
     return res
     .status(200)
-    .json(200, user, "avatar image updated successfully")
+    .json(new ApiResponse(200, updatedUser, "avatar image updated successfully"))
 })
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
@@ -311,6 +335,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     if(!coverImageLocalPath){
         throw new ApiError(400, "Cover Image file is missing")
     }
+
+    //assignment : delete old image
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
@@ -330,7 +356,82 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(200, user, "cover image updated successfully")
+    .json(new ApiResponse(200, user, "cover image updated successfully"))
+})
+
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+
+    const {username} = req.params
+
+    if(!username?.trim()){
+        throw new ApiError(400, "Username is missing")
+    }
+
+    const channel = await User.aggregate(
+        [
+            {
+                $match: {
+                    username: username?.toLowerCase()
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscription",
+                    localField: "_id",
+                    foreignField: "channel",
+                    as: "subscribers"
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscription",
+                    localField: "_id",
+                    foreignField: "subscriber",
+                    as: "subscribedTo"
+                }
+            },
+            {
+                $addFields: {
+                    subscribersCount: {
+                        $size:  "$subscribers"
+                    },
+                    channelsSubscribedToCount: {
+                        $size: "$subscribedTo"
+                    },
+                    isSubscribed: {
+                        $cond:{
+                            if: { $in: [req.user?._id, "$subscribers.subscriber"]},
+                            then: true, 
+                            else: false
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    fullName: 1, 
+                    username: 1, 
+                    email: 1, 
+                    subscribersCount: 1, 
+                    channelsSubscribedToCount: 1, 
+                    isSubscribed: 1, 
+                    avatar: 1, 
+                    coverImage: 1
+                }
+            }
+        ]
+    )
+    console.log(channel)
+    
+    if(!channel?.length){
+        throw new ApiError(404, "Cannel does not exist")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, channel[0], "Channel fetched successfully")
+    )
 })
  
 export {
