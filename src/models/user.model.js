@@ -53,10 +53,10 @@ const userSchema = new Schema(
 )
 
 userSchema.pre("save", async function(next){ //here we are not using arrow function as callback function because arrow function doesn't hold reference of this. Here this holds the reference of userSchema 
-    if(!this.isModified("password")) return next(); //if the password is not modified then we will return because we don't want to unnecessery updaations of password 
+    if(!this.isModified("password")) return next(); //if the password is not modified then we will return because we don't want to unnecessery updations of password 
 
     this.password = await bcrypt.hash(this.password, 10) //Here we are encrypting the password of user using hash() of bcrypt library because password is confidential
-    next()
+    next() //next() is used to pass controls to next middleware 
 })
 
 userSchema.methods.isPasswordCorrect = async function(password) { //mongoose allows us to insert user defined middleware methods to use. We can insert this methods using Schema.methods.functionName = function () {}
