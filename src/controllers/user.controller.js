@@ -370,15 +370,15 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     const channel = await User.aggregate(
         [
             {
-                $match: {
+                $match: { // $match is used to filter documents 
                     username: username?.toLowerCase()
                 }
             },
             {
-                $lookup: {
+                $lookup: { //$lookup is used to join documents 
                     from: "subscription",
                     localField: "_id",
-                    foreignField: "channel",
+                    foreignField: "channel",  // if we want to count subscriber of perticular channel(eg.,Chai Aur Code), then we would select all documets in which channel is (eg.,Chai Aur Code). then we count the number of documents to count number of subscribers of that channel 
                     as: "subscribers"
                 }
             },
@@ -386,14 +386,14 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 $lookup: {
                     from: "subscription",
                     localField: "_id",
-                    foreignField: "subscriber",
+                    foreignField: "subscriber", // if we want to count how many channels User (eg., Prasad) have subscribed, then we would select all documents in which subscriber == Prasad
                     as: "subscribedTo"
                 }
             },
             {
-                $addFields: {
+                $addFields: { // $addFields is used to add new fields in document
                     subscribersCount: {
-                        $size:  "$subscribers"
+                        $size:  "$subscribers"  // $size is used to caculate number of documents
                     },
                     channelsSubscribedToCount: {
                         $size: "$subscribedTo"
@@ -408,7 +408,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 }
             },
             {
-                $project: {
+                $project: { // $project returns the selected items, so we select items to pass as following by allocating 1 to each item that we want to pass
                     fullName: 1, 
                     username: 1, 
                     email: 1, 
@@ -433,6 +433,59 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         new ApiResponse(200, channel[0], "Channel fetched successfully")
     )
 })
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+    
+    const user = await User.aggregate([
+        {
+            $match: new mongoose.Types.ObjectId(req.user?._id)
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1, 
+                                        username: 1,
+                                        avatar: 1,
+
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        200,
+        user[0].watchHistory,
+        "Watch History Fetched Successfully"
+    )
+
+})
  
 export {
     registerUser,
@@ -443,5 +496,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 }
