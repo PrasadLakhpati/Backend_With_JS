@@ -17,7 +17,7 @@ app.use(express.json({
 
 //accepting url, we are bound to do this because url converts the information such as it converts space to %20
 app.use(express.urlencoded({
-    extended: true,
+    extended: true, // extended allows us to give nested objects     
     limit: "16kb"
 }))
 

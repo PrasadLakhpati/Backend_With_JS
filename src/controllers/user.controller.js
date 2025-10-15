@@ -8,7 +8,7 @@ import { Subscription } from "../models/subscription.model.js"
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
-    try {
+    try {  
         const user = await User.findOne(userId)
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
@@ -50,7 +50,7 @@ const registerUser = asyncHandler( async (req, res) => {
         $or: [{ username }, { email }]
     })
 
-    if (!existedUser) {
+    if (existedUser) {
         throw new ApiError(409, "User with email or username already exists")
     }
     console.log("files in the temp : ",req.files);
@@ -112,11 +112,16 @@ const loginUser = asyncHandler(async (req, res) => {
     // access and refresh token 
     // send cookie
 
-    const [email, username, password] = req.body
+    const {email, username, password} = req.body
 
-    if(!email || !username){
+    if(!email && !username){
         throw new ApiError(400, "username or email is required")
     }
+
+    //here is an alternative of above code based on logic
+    //if(!(username || password)){
+    //  throw new ApiError(404, "username or password is required")
+    //}
 
     const user = await User.findOne({
         $or: [{username}, {email}]
